@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Trash Rejecter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-area">
+        <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" class="cookie-base" />
+          <circle cx="35" cy="35" r="4" class="cookie-chip" />
+          <circle cx="65" cy="40" r="4" class="cookie-chip" />
+          <circle cx="40" cy="65" r="4" class="cookie-chip" />
+          <circle cx="60" cy="65" r="4" class="cookie-chip" />
+          <line x1="20" y1="20" x2="80" y2="80" class="ban-line" />
+        </svg>
+        <div class="logo-text">
+          <h1 class="title">Cookie<span>Trash</span></h1>
+          <p class="subtitle">Auto-Consent Rejecter</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Card (Glassmorphism) -->
+    <main class="main-card">
+      
+      <!-- Global Protection Toggle -->
+      <div class="control-row card-item glow-item" id="global-control">
+        <div class="control-info">
+          <span class="control-label">Global Protection</span>
+          <span class="control-status" id="global-status">Active</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="global-toggle" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <!-- Current Site Info and Whitelist Toggle -->
+      <div class="control-row card-item" id="domain-control">
+        <div class="control-info">
+          <span class="control-label">Active on this site</span>
+          <span class="domain-name" id="current-domain">example.com</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="domain-toggle" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-box card-item clickable-stat" id="page-stat-box" title="Click to view details">
+          <span class="stat-label">This Page</span>
+          <span class="stat-number glow-cyan" id="page-blocked-count">0</span>
+          <span class="stat-subtext">banners rejected</span>
+        </div>
+        <div class="stat-box card-item">
+          <span class="stat-label">Total Blocked</span>
+          <span class="stat-number glow-pink" id="total-blocked-count">0</span>
+          <span class="stat-subtext">trash discarded</span>
+        </div>
+      </div>
+
+      <!-- Details Panel (Initially Closed) -->
+      <div class="details-panel" id="details-panel">
+        <div class="details-header">
+          <span class="details-title">Page Block details</span>
+          <button class="close-details-btn" id="close-details-btn" aria-label="Close details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="close-icon">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="details-list" id="details-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer Action List -->
+    <footer class="footer">
+      <button class="action-btn" id="report-site-btn">
+        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Report Broken Site
+      </button>
+      <button class="action-btn" id="reload-tab-btn">
+        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        Reload Page
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
