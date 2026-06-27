@@ -70,6 +70,11 @@
   // Set to keep track of processed banner elements
   const processedBanners = new Set();
   
+  // Circuit breaker to prevent infinite loops on tricky sites
+  let blockedCount = 0;
+  const MAX_BLOCKS = 10;
+  let circuitBreakerTripped = false;
+  
   // Heuristic button matchers
   function isRejectButton(text) {
     const cleanText = text.toLowerCase().replace(/[^a-z\s-]/g, "").trim();
@@ -345,8 +350,16 @@
 
   // Handle a detected cookie banner
   async function handleCookieBanner(banner) {
+    if (circuitBreakerTripped) return;
+    if (blockedCount >= MAX_BLOCKS) {
+      console.log("Cookie Trash Rejecter: Max blocks reached. Circuit breaker tripped.");
+      circuitBreakerTripped = true;
+      return;
+    }
+    
     if (processedBanners.has(banner)) return;
     processedBanners.add(banner);
+    blockedCount++;
     
     console.log("Detected cookie consent banner:", banner);
     
@@ -433,14 +446,46 @@
     if (processedBanners.has(element)) return false;
     if (element === document.body || element === document.documentElement) return false;
     
-    // Quick size check to skip small elements (unless it's a script host like didomi)
+    // CMP Class/ID checks (do these first because they are definitive)
+    const knownSelectors = [
+      "#onetrust-consent-sdk", "#didomi-host", "#sp-consent-notice", 
+      ".cookie-banner", ".cookieconsent", ".cc-window", ".cc-banner",
+      "#cookiebot", "#usercentrics-root", ".cookie-consent-overlay",
+      "#hs-eu-cookie-confirmation", "#cookie-law-info-bar"
+    ];
+    for (const selector of knownSelectors) {
+      if (element.matches && element.matches(selector)) {
+        return true;
+      }
+    }
+
+    // Exclude major structural tags
+    const tagName = element.tagName.toLowerCase();
+    const isMainTag = ['main', 'article', 'header', 'footer', 'nav', 'form'].includes(tagName);
+    if (isMainTag) return false;
+    
+    // Quick size check to skip small elements
     const rect = element.getBoundingClientRect();
     const isSpecialHost = element.id === "didomi-host" || element.id === "usercentrics-root";
-    if (!isSpecialHost && rect.width > 0 && rect.height > 0 && (rect.width < 100 || rect.height < 40)) {
-      return false;
+    
+    if (!isSpecialHost && rect.width > 0 && rect.height > 0) {
+      if (rect.width < 100 || rect.height < 40) {
+        return false;
+      }
+      // If the element's area is larger than 80% of the viewport, it's likely a page wrapper
+      const windowArea = window.innerWidth * window.innerHeight;
+      const elArea = rect.width * rect.height;
+      if (elArea > windowArea * 0.8) {
+        return false;
+      }
     }
     
     const text = (element.textContent || "").toLowerCase();
+    
+    // If there is an excessive amount of text, this is likely a privacy policy page or full article
+    if (text.length > 3000) {
+      return false;
+    }
     
     // Scoring matches
     const hasCookie = text.includes("cookie");
@@ -452,18 +497,6 @@
     const score = (hasCookie ? 2 : 0) + (hasConsent ? 1.5 : 0) + (hasPrivacy ? 1 : 0) + (hasTracking ? 1 : 0) + (hasGdpr ? 1.5 : 0);
     if (score >= 2.5) {
       return true;
-    }
-    
-    // CMP Class/ID checks
-    const knownSelectors = [
-      "#onetrust-consent-sdk", "#didomi-host", "#sp-consent-notice", 
-      ".cookie-banner", ".cookieconsent", ".cc-window", ".cc-banner",
-      "#cookiebot", "#usercentrics-root", ".cookie-consent-overlay"
-    ];
-    for (const selector of knownSelectors) {
-      if (element.matches && element.matches(selector)) {
-        return true;
-      }
     }
     
     return false;
@@ -484,7 +517,7 @@
 
   // Scan element and recursively traverse shadow roots
   function checkElementAndShadow(element) {
-    if (!element) return;
+    if (circuitBreakerTripped || !element) return;
     
     if (isCookieBanner(element)) {
       handleCookieBanner(element);
@@ -511,7 +544,7 @@
 
   // Initial Scan
   function scanDOM() {
-    if (!document.body) return;
+    if (circuitBreakerTripped || !document.body) return;
     
     // Scan body
     checkElementAndShadow(document.body);
@@ -544,6 +577,10 @@
 
   // Watch for mutations
   const observer = new MutationObserver((mutations) => {
+    if (circuitBreakerTripped) {
+      observer.disconnect();
+      return;
+    }
     let shouldScan = false;
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
