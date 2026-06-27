@@ -9,6 +9,7 @@ A premium Chrome browser extension designed to automatically decline, reject, an
 - **Auto-Settings Configuration**: For banners without direct rejection paths, it opens the settings modal, deselects non-essential tracking switches, and saves preferences automatically.
 - **Layout & Scroll Restoration**: Instantly hides stubborn overlays and removes viewport locks (`overflow: hidden`) or screen shields so you can scroll normally.
 - **Sleek Glassmorphic Statistics Popup**: Displays live statistics of blocked trackers on the current page and overall, with an expandable details history log.
+- **Smart Anti-Looping Circuit Breaker**: Advanced heuristics that ignore large structural wrappers (preventing false positives on sites like GitHub or Cloudflare) and an automatic cutoff to stop infinite re-render loops.
 - **100% Local and Private**: Runs entirely in your browser with zero external calls or data tracking.
 
 ---

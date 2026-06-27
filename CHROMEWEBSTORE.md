@@ -18,6 +18,7 @@ Key features:
 - Disables marketing and tracking switches within custom preferences panels before submitting consent.
 - Hides stubborn cookie banners instantly to prevent layout shift.
 - Restores window scroll controls if banners attempt to lock the viewport.
+- Built-in circuit breaker and smart heuristics to prevent false positives and infinite loops on complex single-page apps.
 - Fully operates locally on your machine with zero external data transmissions.
 
 How to use it:
@@ -100,6 +101,7 @@ https://github.com/marc/cookie-trash-rejecter
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
+| 1.0.1 | 2026-06-27 | Added circuit breaker and smart heuristics to prevent infinite loops on complex sites like GitHub and Cloudflare. | Draft |
 | 1.0.0 | 2026-06-26 | Initial release containing heuristic click rejecter and glassmorphism stats popup. | Draft |
 
 ## Review Notes
