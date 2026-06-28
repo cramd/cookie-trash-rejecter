@@ -332,7 +332,7 @@
     let saveButton = null;
     
     for (const btn of allButtons) {
-      const text = (btn.textContent || "").trim();
+      const text = (btn.value || btn.textContent || "").trim();
       if (isSaveButton(text)) {
         saveButton = btn;
         break;
@@ -382,7 +382,7 @@
     // 1. Search for direct reject button
     let rejectBtn = null;
     for (const btn of buttons) {
-      const text = (btn.textContent || "").trim();
+      const text = (btn.value || btn.textContent || "").trim();
       if (isRejectButton(text)) {
         rejectBtn = btn;
         break;
@@ -399,7 +399,7 @@
       // 2. Search for Settings/Preferences button
       let settingsBtn = null;
       for (const btn of buttons) {
-        const text = (btn.textContent || "").trim();
+        const text = (btn.value || btn.textContent || "").trim();
         if (isSettingsButton(text)) {
           settingsBtn = btn;
           break;
@@ -451,7 +451,8 @@
       "#onetrust-consent-sdk", "#didomi-host", "#sp-consent-notice", 
       ".cookie-banner", ".cookieconsent", ".cc-window", ".cc-banner",
       "#cookiebot", "#usercentrics-root", ".cookie-consent-overlay",
-      "#hs-eu-cookie-confirmation", "#cookie-law-info-bar"
+      "#hs-eu-cookie-confirmation", "#cookie-law-info-bar",
+      ".cc-revoke", ".cc-bottom"
     ];
     for (const selector of knownSelectors) {
       if (element.matches && element.matches(selector)) {
@@ -461,7 +462,7 @@
 
     // Exclude major structural tags
     const tagName = element.tagName.toLowerCase();
-    const isMainTag = ['main', 'article', 'header', 'footer', 'nav', 'form'].includes(tagName);
+    const isMainTag = ['main', 'article', 'header', 'footer', 'nav', 'form', 'aside'].includes(tagName);
     if (isMainTag) return false;
     
     // Quick size check to skip small elements
@@ -495,8 +496,50 @@
     const hasGdpr = text.includes("gdpr");
     
     const score = (hasCookie ? 2 : 0) + (hasConsent ? 1.5 : 0) + (hasPrivacy ? 1 : 0) + (hasTracking ? 1 : 0) + (hasGdpr ? 1.5 : 0);
+    
     if (score >= 2.5) {
-      return true;
+      // Must have a strong banner button to avoid false positives on articles/projects about cookies
+      const buttons = getButtonsRecursive(element);
+      
+      let hasStrongBannerButton = false;
+      for (const btn of buttons) {
+        const rawText = (btn.value || btn.textContent || "").toLowerCase();
+        const btnText = rawText.replace(/[^a-z\s-]/g, "").trim();
+        
+        if (isRejectButton(rawText)) {
+          hasStrongBannerButton = true;
+          break;
+        }
+        
+        const strongAccept = [
+          "accept all", "allow all", "agree all", "allow cookies", "accept cookies", 
+          "i agree", "got it", "accept", "allow", "understand", "i understand", 
+          "consent", "accept necessary"
+        ];
+        if (strongAccept.includes(btnText)) {
+          hasStrongBannerButton = true;
+          break;
+        }
+        
+        const strongSettings = [
+          "cookie settings", "manage preferences", "cookie preferences", 
+          "manage cookies", "privacy settings", "cookie options"
+        ];
+        if (strongSettings.includes(btnText)) {
+          hasStrongBannerButton = true;
+          break;
+        }
+      }
+      
+      if (hasStrongBannerButton) {
+        return true;
+      }
+      
+      // Fallback for text-only banners that have explicit cookie banner classes
+      const explicitBannerClasses = '.cookie-banner, .cookieconsent, .cookie-notice, .cookie-popup, [id*="cookie-banner" i], [class*="cookie-banner" i], [id*="cookiebanner" i], [class*="cookiebanner" i]';
+      if (element.matches && element.matches(explicitBannerClasses)) {
+        return true;
+      }
     }
     
     return false;
